@@ -109,7 +109,10 @@
     .risk-caution { background: #fff3d8; color: var(--warning); }
     .risk-high { background: #ffe7ea; color: var(--danger); }
     .examples { display: flex; flex-wrap: wrap; gap: 7px; margin-top: auto; }
-    .example { max-width: 100%; padding: 5px 8px; overflow: hidden; border: 1px solid #e5edf2; border-radius: 8px; background: #f7fafc; color: #3e596c; font-size: .78rem; line-height: 1.35; text-overflow: ellipsis; }
+    .example { max-width: 100%; padding: 5px 8px; overflow: hidden; border: 1px solid #d8e7ed; border-radius: 8px; background: #f7fafc; color: #3e596c; font-size: .78rem; line-height: 1.35; text-overflow: ellipsis; }
+    a.example { text-decoration: none; transition: .18s ease; }
+    a.example:hover, a.example:focus-visible { border-color: var(--mint-dark); background: #e5f8f4; color: #075f57; transform: translateY(-1px); outline: none; }
+    .examples::before { content: "可点击子词条"; width: 100%; margin-bottom: 1px; color: #7890a0; font-size: .7rem; font-weight: 800; letter-spacing: .04em; }
     .detail-link { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 15px; padding-top: 13px; border-top: 1px solid #e8eff3; color: var(--mint-dark); font-size: .86rem; font-weight: 800; text-decoration: none; }
     .detail-link span { transition: transform .18s ease; }
     .detail-link:hover span { transform: translateX(3px); }
@@ -148,6 +151,7 @@
     .child-term:hover { transform: translateY(-2px); border-color: var(--mint-dark); box-shadow: 0 8px 20px rgba(8,127,114,.1); }
     .child-term strong { display: block; color: var(--ink); font-size: .96rem; line-height: 1.35; }
     .child-term span { display: inline-block; margin-top: 8px; padding: 3px 7px; border-radius: 999px; background: #dff7f2; color: #075f57; font-size: .72rem; font-weight: 800; }
+    .child-term em { display: block; margin-top: 8px; color: var(--mint-dark); font-size: .72rem; font-style: normal; font-weight: 850; }
     .term-context { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
     .term-context a { color: var(--mint-dark); font-weight: 800; text-decoration: none; }
     .market-note { margin-bottom: 14px !important; font-size: .86rem; line-height: 1.6; }
@@ -323,7 +327,7 @@
 
     function cardTemplate(item) {
       const isSaved = saved.has(item.number);
-      const examples = item.examples.map((example) => '<span class="example">' + highlight(example, state.query) + '</span>').join('');
+      const examples = item.detail.childTerms.map((term) => '<a class="example" href="' + termSearchUrl(term.name) + '" target="_blank" rel="noopener" title="在闲鱼搜索：' + escapeHtml(term.name) + '">' + highlight(term.name, state.query) + '</a>').join('');
       return '<article class="idea-card">' +
         '<div class="card-top"><span class="card-number">NO. ' + String(item.number).padStart(3, '0') + '</span>' +
         '<button class="favorite" type="button" data-save="' + item.number + '" aria-pressed="' + isSaved + '" aria-label="' + (isSaved ? '取消收藏' : '收藏') + escapeHtml(item.title) + '" title="' + (isSaved ? '取消收藏' : '收藏') + '">' + (isSaved ? '★' : '☆') + '</button></div>' +
@@ -334,7 +338,7 @@
     }
 
     function matches(item) {
-      const haystack = [item.title, item.risk, ...item.examples].join(' ').toLowerCase();
+      const haystack = [item.title, item.risk, ...item.examples, ...item.detail.childTerms.map((term) => term.name + ' ' + term.category)].join(' ').toLowerCase();
       const queryMatch = !state.query || haystack.includes(state.query.toLowerCase());
       const themeMatch = state.theme === 'all' || item.theme === state.theme;
       const modeMatch = state.mode === 'all' || (state.mode === 'low' && item.tier === 'low') || (state.mode === 'saved' && saved.has(item.number));
@@ -371,9 +375,13 @@
       return '#term-' + String(item.number).padStart(3, '0') + '-' + String(index).padStart(2, '0');
     }
 
+    function termSearchUrl(termName) {
+      return 'https://www.goofish.com/search?q=' + encodeURIComponent(termName);
+    }
+
     function childTermsMarkup(item) {
       return '<div class="child-term-grid">' + item.detail.childTerms.map((value, index) =>
-        '<a class="child-term" href="' + termHash(item, index) + '"><strong>' + escapeHtml(value.name) + '</strong><span>二级分类 · ' + escapeHtml(value.category) + '</span></a>'
+        '<a class="child-term" href="' + termSearchUrl(value.name) + '" target="_blank" rel="noopener"><strong>' + escapeHtml(value.name) + '</strong><span>二级分类 · ' + escapeHtml(value.category) + '</span><em>闲鱼检索 →</em></a>'
       ).join('') + '</div>';
     }
 
